@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Poker Machine Simulator — Mathematics of the Edge</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Poker Machine Simulator<small>A classroom sandbox for the mathematics of the house edge — no real money, ever.</small></div>
+    <div class="topRight">
+      <div class="tag" id="rngTag">RNG: Math.random() · outcomes are honest</div>
+      <button class="mathsToggle" id="mathsToggle" type="button" aria-expanded="false">Show the maths ▸</button>
+    </div>
+  </div>
+
+  <div class="layout collapsed" id="layout">
+
+    <!-- ================= LEFT: MACHINE ================= -->
+    <div class="machine card">
+      <div class="fxlayer" id="fx"></div>
+
+      <div class="marquee">
+        <div class="name" id="machineName">MATHEMATICS GROWTH ADVENTURE</div>
+        <div class="sub">5 × 3 · Hold &amp; Spin · Gamble</div>
+      </div>
+
+      <div class="jackpots">
+        <div class="jp"><div class="lbl">Mini</div><div class="val" id="jpMini">—</div></div>
+        <div class="jp"><div class="lbl">Minor</div><div class="val" id="jpMinor">—</div></div>
+        <div class="jp"><div class="lbl">Major</div><div class="val" id="jpMajor">—</div></div>
+        <div class="jp grand"><div class="lbl">Grand</div><div class="val" id="jpGrand">—</div></div>
+      </div>
+
+      <div class="reelbox">
+        <div class="reels" id="reels"></div>
+        <svg class="paylineSvg" id="paylineSvg" viewBox="0 0 1000 600" preserveAspectRatio="none"></svg>
+      </div>
+
+      <!-- Credit shown in CREDITS first (like a real cabinet) with the true
+           dollar value beneath — a deliberate teaching point about how machines
+           reframe money as "credits". -->
+      <div class="creditStrip" aria-label="Machine credit, bet and win meters">
+        <div class="meter bal">
+          <div class="k">Credit</div>
+          <div class="v" id="balance">0</div>
+          <div class="sub" id="balanceCash">$0.00</div>
+        </div>
+        <div class="meter">
+          <div class="k">Bet</div>
+          <div class="v" id="buttonBetMeter">0</div>
+          <div class="sub" id="betCash">$0.00</div>
+        </div>
+        <div class="meter">
+          <div class="k">Win</div>
+          <div class="v" id="lastWinMeter">0</div>
+          <div class="sub" id="winCash">$0.00</div>
+        </div>
+        <div class="meter pl">
+          <div class="k">Session P/L</div>
+          <div class="v" id="pl">$0.00</div>
+          <div class="sub" id="plDenom">5¢ denom</div>
+        </div>
+      </div>
+
+      <!-- Aristocrat-style bet readout -->
+      <div class="betBanner">
+        <div class="betBannerItem"><span>Lines</span><b id="linesReadout">50</b></div>
+        <div class="betBannerItem"><span>Bet / line</span><b id="bplReadout">1</b></div>
+        <div class="betBannerItem big"><span>Total bet</span><b id="betCalc">$2.50</b></div>
+      </div>
+
+      <!-- ================= PHYSICAL BUTTON DECK ================= -->
+      <div class="cabinetDeck" aria-label="Physical-style machine controls">
+
+        <div class="deckTop">
+          <div class="ticketBay">
+            <div class="slotPlate" id="collectPlate">Collect ticket</div>
+            <div class="slotPlate insert">Note acceptor</div>
+            <button class="cabSmallBtn cash" id="addCashBtn" type="button">＋ Add cash</button>
+            <button class="cabSmallBtn menu" id="menuBtn" type="button">☰ Games / denom</button>
+          </div>
+          <div class="utilCluster">
+            <button class="serviceBtn" id="serviceBtn" type="button">Reserve</button>
+            <button class="cabSmallBtn auto" id="autoBtn" type="button">Auto</button>
+            <button class="cabSmallBtn untilFeature" id="untilFeatureBtn" type="button">Spin until feature</button>
+            <button class="cabSmallBtn maxbet" id="maxBetBtn" type="button">Bet Max</button>
+            <button class="cabSmallBtn stop" id="stopBtn" type="button" disabled>Stop</button>
+            <button class="cabSmallBtn mute" id="muteBtn" type="button">🔊 Sound</button>
+          </div>
+        </div>
+
+        <!-- Take win / Gamble pair -->
+        <div class="actionRow">
+          <button class="cabAction take" id="takeWinBtn" type="button" disabled><span class="ttl">Take win</span><span class="sub" id="takeWinSub">collect</span></button>
+          <button class="cabAction gamble" id="gambleBtn" type="button" disabled><span class="ttl">Gamble</span><span class="sub">double up</span></button>
+        </div>
+
+        <!-- Two horizontal rows of small backlit buttons:
+             top row = bet multiplier (red), bottom row = number of lines (blue). -->
+        <div class="betDeck">
+          <div class="deckRow" id="bplRow" aria-label="Select bet multiplier">
+            <span class="deckRowLabel">Bet ×</span>
+            <button class="betBtn active" data-bpl="1" type="button">1</button>
+            <button class="betBtn" data-bpl="2" type="button">2</button>
+            <button class="betBtn" data-bpl="3" type="button">3</button>
+            <button class="betBtn" data-bpl="5" type="button">5</button>
+            <button class="betBtn" data-bpl="10" type="button">10</button>
+          </div>
+          <div class="deckRow" id="linesRow" aria-label="Select lines">
+            <span class="deckRowLabel">Lines</span>
+            <button class="lineBtn" data-lines="1" type="button">1</button>
+            <button class="lineBtn" data-lines="5" type="button">5</button>
+            <button class="lineBtn" data-lines="10" type="button">10</button>
+            <button class="lineBtn" data-lines="30" type="button">30</button>
+            <button class="lineBtn active" data-lines="50" type="button">50</button>
+          </div>
+        </div>
+
+        <!-- Repeat-bet plunger spins with the current bet. -->
+        <div class="plungerRow">
+          <button class="playPlunger" id="spinBtn" type="button"><span class="pTop">Repeat Bet</span><span class="pBot" id="playLines">50 lines</span></button>
+        </div>
+      </div>
+
+      <div class="result loss" id="result">Press PLAY to spin.</div>
+      <div class="paylineList" id="paylineList"><div class="lineWinItem"><span>No line pays yet.</span><b>—</b></div></div>
+      <div class="gauge"><div id="gaugeFill"></div></div>
+    </div>
+
+    <!-- ================= RIGHT: ANALYTICS ================= -->
+    <div id="analyticsCol">
+      <div class="card graphwrap">
+        <h2>Balance over time</h2>
+        <canvas id="graph" width="900" height="430"></canvas>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--cyan)"></i>Balance</span>
+          <span><i class="dot" style="background:var(--win)"></i>Win tick (≥ bet)</span>
+          <span><i class="dot" style="background:var(--loss)"></i>Loss tick</span>
+          <span><i class="dot" style="background:#5a627a"></i>Starting balance</span>
+        </div>
+      </div>
+
+      <div class="card pad" style="margin-top:16px">
+        <h2>Return to player</h2>
+        <div class="rtp">
+          <div class="stat theo"><div class="k">Theoretical RTP <span style="opacity:.6">(50k sim)</span></div><div class="v" id="theoRTP">—</div></div>
+          <div class="stat act"><div class="k">Actual RTP <span style="opacity:.6">(this session)</span></div><div class="v" id="actRTP">—</div></div>
+        </div>
+        <h2>Session statistics</h2>
+        <div class="statgrid">
+          <div class="stat"><div class="k">Spins</div><div class="v" id="stSpins">0</div></div>
+          <div class="stat"><div class="k">Total wagered</div><div class="v" id="stWager">$0</div></div>
+          <div class="stat"><div class="k">Hit rate</div><div class="v" id="stHit">—</div></div>
+          <div class="stat"><div class="k">Feature triggers</div><div class="v" id="stFeat">0</div></div>
+          <div class="stat"><div class="k">Largest win</div><div class="v" id="stMax">$0</div></div>
+          <div class="stat"><div class="k">Longest losing run</div><div class="v" id="stStreak">0</div></div>
+          <div class="stat"><div class="k">Std dev / spin</div><div class="v" id="stStd">—</div></div>
+          <div class="stat"><div class="k">House edge</div><div class="v" id="stEdge">—</div></div>
+        </div>
+      </div>
+
+      <div class="card pad" style="margin-top:16px">
+        <details class="settings" open>
+          <summary>Machine &amp; session settings</summary>
+
+          <div class="presets" style="margin-top:10px">
+            <button class="chip active" data-preset="balanced">Balanced</button>
+            <button class="chip" data-preset="frequent">Frequent small wins</button>
+            <button class="chip" data-preset="volatile">High volatility</button>
+          </div>
+
+          <label class="field" style="display:flex;align-items:center;gap:8px;margin:10px 0;cursor:pointer">
+            <input type="checkbox" id="useImagesToggle" checked />
+            <span>Use image symbols (PNGs in <code>assets/themes/maths/</code>; falls back to built-in art)</span>
+          </label>
+
+          <div class="rtpControl">
+            <div class="rtpTop"><span>Target return to player</span><b id="targetRtpLbl">90%</b></div>
+            <input type="range" id="targetRTP" min="60" max="99" step="1" value="90" style="width:100%">
+            <div class="rtpReadout">
+              <span>House edge: <b id="targetEdgeLbl">10%</b></span>
+              <span>Payout scale: <b id="payoutScaleLbl">1.00×</b></span>
+            </div>
+            <div class="bulkBtns">
+              <button class="btn" id="bulk1000" type="button">Sim ×1,000</button>
+              <button class="btn" id="bulk10000" type="button">Sim ×10,000</button>
+            </div>
+            <div class="bulkNote">Use the slider, then run thousands of instant spins to see actual RTP wander in the short term but converge toward the chosen house edge over many plays.</div>
+          </div>
+
+          <div class="setgrid">
+            <div class="field">
+              <label>Deposit / starting balance ($)</label>
+              <input type="number" id="startBal" min="0" step="1" value="0">
+            </div>
+            <div class="field">
+              <label>Auto-spin count</label>
+              <input type="number" id="autoCount" min="1" step="10" value="100">
+            </div>
+          </div>
+
+          <div class="setgrid" style="margin-top:10px">
+            <label class="toggle"><input type="checkbox" id="tFeature" checked> Hold &amp; Spin feature</label>
+            <label class="toggle"><input type="checkbox" id="tGamble" checked> Enable gamble button after wins</label>
+          </div>
+
+          <div class="speedrow">
+            <span>Auto speed</span>
+            <input type="range" id="speed" min="1" max="60" value="28" style="flex:1">
+            <span id="speedLbl" style="font-family:var(--mono)">fast</span>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="applyBtn">Apply &amp; reset session</button>
+            <button class="btn" id="resetBtn">Reset balance only</button>
+          </div>
+
+          <p class="note" style="margin-top:12px">
+            Every result comes from <code>Math.random()</code>. The visible 5 × 3 reel grid is the actual
+            outcome: active paylines are evaluated from left to right and Hold &amp; Spin is scatter-triggered.
+            The RTP slider scales the payout table and feature values so you can compare a 60%, 80%, 90% or 99% machine
+            over many simulated plays. The Spin Until Feature button rapidly autospins until a 6+ orb trigger appears, then pauses to open the feature screen.
+            The feature is an educational Hold &amp; Spin model: triggering orbs lock into their same positions, prize balls drop into the grid, each new orb resets respins to 3,
+            and a full 15-orb screen awards the Grand. The gamble game is a fair side bet: red/black pays ×2, and the exact suit pays ×4.
+          </p>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Educational simulation only — not a gambling product, no wagering, no payouts.
+    Shortcuts: <span class="kbd">Space</span> spin · <span class="kbd">A</span> auto · <span class="kbd">Esc</span> stop.<br>
+    If gambling is affecting you or someone you know, support is available 24/7. In Australia: Gambling Help 1800 858 858.
+  </div>
+</div>
+
+<!-- ============ LOAD / DEPOSIT SCREEN ============ -->
+<div class="overlay loadOverlay show" id="loadOverlay">
+  <div class="loadScreen">
+    <div class="loadMarquee">
+      <div class="loadName" id="loadMachineName">MATHEMATICS GROWTH ADVENTURE</div>
+      <div class="loadSub">Insert cash &amp; set the denomination</div>
+    </div>
+
+    <div class="loadBody">
+      <div class="loadCol">
+        <div class="loadColTitle">1 · Insert cash</div>
+        <div class="noteRow">
+          <button class="noteBtn" data-note="10" type="button"><span class="noteFace">$10</span></button>
+          <button class="noteBtn" data-note="20" type="button"><span class="noteFace">$20</span></button>
+          <button class="noteBtn" data-note="50" type="button"><span class="noteFace">$50</span></button>
+          <button class="noteBtn" data-note="100" type="button"><span class="noteFace">$100</span></button>
+        </div>
+        <div class="depositDisplay">
+          <span>Deposit</span>
+          <b id="depositAmt">$0.00</b>
+        </div>
+        <button class="clearDeposit" id="clearDeposit" type="button">Clear</button>
+      </div>
+
+      <div class="loadCol">
+        <div class="loadColTitle" id="loadColTitle2">2 · Choose denomination</div>
+        <div class="denomGrid" id="loadDenomGrid">
+          <button class="loadDenomBtn" data-denom="0.01" type="button">1¢</button>
+          <button class="loadDenomBtn" data-denom="0.02" type="button">2¢</button>
+          <button class="loadDenomBtn active" data-denom="0.05" type="button">5¢</button>
+          <button class="loadDenomBtn" data-denom="0.10" type="button">10¢</button>
+          <button class="loadDenomBtn" data-denom="0.50" type="button">50¢</button>
+          <button class="loadDenomBtn" data-denom="1.00" type="button">$1</button>
+        </div>
+        <div class="denomNote" id="denomNote">
+          At <b id="denomNoteVal">5¢</b> per credit, a <b id="denomNoteDep">$0</b> deposit
+          buys <b id="denomNoteCred">0</b> credits.
+        </div>
+      </div>
+    </div>
+
+    <div class="loadEdu">
+      Notice the machine talks in <b>credits</b>, not dollars. A lower denomination
+      makes the same cash look like far more credits — that is by design.
+    </div>
+
+    <button class="loadPlay" id="loadPlayBtn" type="button" disabled>Insert cash to play</button>
+    <div class="loadFoot">Educational only · no real money, no payouts · Gambling Help 1800 858 858</div>
+  </div>
+</div>
+
+<!-- ============ HOLD & SPIN OVERLAY ============ -->
+<div class="overlay" id="hsOverlay">
+  <div class="featureScreen">
+    <div class="featureTop">
+      <div>
+        <h3>Hold &amp; Spin Feature</h3>
+        <div class="featureSub" id="hsMessage">6+ orbs trigger the feature. New orbs reset respins to 3.</div>
+      </div>
+      <div class="featureJackpot">Grand <b id="hsGrandMeter">$0.00</b></div>
+    </div>
+    <div class="hsgrid" id="hsGrid"></div>
+    <div class="featureTrail" id="hsTrail" aria-label="Feature progress toward full screen"></div>
+    <div class="featureMeters">
+      <div><span>Respins</span><b id="hsRespins">3</b></div>
+      <div><span>Orbs</span><b><span id="hsCount">0</span>/15</b></div>
+      <div><span>Needed</span><b id="hsNeed">15</b></div>
+      <div><span>Collected</span><b id="hsTotal">$0.00</b></div>
+    </div>
+    <div class="featureButtonPanel">
+      <button class="cabBtn feature" id="hsSpinBtn">Start Feature</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAMBLE OVERLAY (classic Aristocrat style) ============ -->
+<div class="overlay" id="gOverlay">
+  <div class="gambleScreen">
+
+    <div class="gTopBar">
+      <div class="gMeter"><span>Credit</span><b id="gCredit">0</b><small id="gCreditCash">$0.00</small></div>
+      <div class="gMeter"><span>Bet</span><b id="gBet">0</b><small id="gBetCash">$0.00</small></div>
+      <div class="gMeter win"><span>Win</span><b id="gWinTotal">0</b><small id="gWinCash">$0.00</small></div>
+      <div class="gNote">$1 = <b id="gPerDollar">100</b> credits<br>Choose <b>RED</b> or <b>BLACK</b> to double · suit to quadruple</div>
+    </div>
+
+    <div class="gSubBar">
+      <div class="gModeBox">
+        <div class="gModeTitle" id="gModeTitle">Full gamble selected</div>
+        <div class="gModeBtns">
+          <button class="gModeBtn active" id="fullBtn" type="button">Full</button>
+          <button class="gModeBtn" id="halfBtn" type="button">Half</button>
+        </div>
+        <div class="gAtRisk" style="margin-top:8px">Gamble amount<b id="gAmt">0</b></div>
+      </div>
+      <div class="gHistory">
+        <div class="gHistoryTitle">History</div>
+        <div class="gHistoryRow" id="gHistory"></div>
+      </div>
+    </div>
+
+    <div class="gPlay">
+      <button class="gBig red gbtn r" data-bet="red" type="button">
+        <span class="gBigLbl">Red</span><span class="gBigSuits">♥ ♦</span>
+      </button>
+
+      <div class="gPlayCenter">
+        <div class="card3d"><div class="cardinner" id="cardInner">
+          <div class="face back"></div>
+          <div class="face front" id="cardFront">?</div>
+        </div></div>
+        <div class="gSuits">
+          <button class="suit red" data-suit="♥" type="button">♥</button>
+          <button class="suit red" data-suit="♦" type="button">♦</button>
+          <button class="suit black" data-suit="♣" type="button">♣</button>
+          <button class="suit black" data-suit="♠" type="button">♠</button>
+        </div>
+        <button class="gcollect" id="collectBtn" type="button">Collect</button>
+      </div>
+
+      <button class="gBig black gbtn b" data-bet="black" type="button">
+        <span class="gBigLbl">Black</span><span class="gBigSuits">♣ ♠</span>
+      </button>
+    </div>
+
+    <div class="gMsg" id="gMsg" style="margin-top:10px">Guess the colour to double, or the exact suit to quadruple.</div>
+    <div class="gFoot">Up to 5 gambles in a row · the gamble is a fair bet: ×2 at 1/2, ×4 at 1/4 · Half gamble banks half and risks the rest.</div>
+  </div>
+</div>
+
+<!-- ============ SMALL-SCREEN MATHS NOTICE ============ -->
+<div class="overlay" id="mathsWarn">
+  <div class="modal">
+    <h3>Better on a bigger screen</h3>
+    <p>The analysis panel — the live balance graph, return-to-player figures and session statistics — has a lot of fine detail that's much easier to read on a laptop or desktop. You can still open it here, it'll just be a little squeezed.</p>
+    <div class="modalBtns">
+      <button class="primary" id="mathsWarnGo" type="button">Show it anyway</button>
+      <button id="mathsWarnCancel" type="button">Keep playing</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
